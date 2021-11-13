@@ -1,0 +1,14 @@
+---
+
+#This is where you define variables used by the playbooks.
+#You can use ansible vault to encrypt sensitive info (passwords)
+
+ip_address: ''
+user_name: ''
+password: ''
+client_id: ''
+client_secret: '' 
+bluetooth_mac: ''
+
+
+

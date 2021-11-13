@@ -1,0 +1,8 @@
+---
+
+- name: Create Spotify Jukebox
+  hosts: all
+  gather_facts: yes
+  become: yes 
+  roles:
+    - spotify

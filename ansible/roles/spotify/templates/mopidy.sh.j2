@@ -1,0 +1,46 @@
+#!/usr/bin/expect -f 
+
+
+set mac "{{ bluetooth_mac }}" 
+
+spawn -ignore HUP /usr/bin/pulseaudio --start
+
+expect_background
+
+spawn -ignore HUP /usr/bin/bluetoothctl 
+
+expect_background
+
+expect -exact "\[bluetooth\]#"
+
+send -- "power on\r"
+
+expect -exact "\[bluetooth\]#"
+
+send -- "default-agent\r"
+
+expect exact "\[bluetooth\]#"
+
+send -- "scan on\r"
+
+expect exact "\[bluetooth\]#"
+
+send -- "trust $mac\r" 
+
+expect -exact "\[bluetooth\]#"
+
+send -- "pair $mac\r" 
+
+expect -exact "\[bluetooth\]#"
+
+send -- "connect $mac\r" 
+
+send -- "exit\r"
+
+expect -exact "pi@raspberrypi:~ $"
+
+spawn -ignore HUP /usr/bin/mopidy
+
+expect_background
+
+expect eof

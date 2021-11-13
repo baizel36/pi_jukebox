@@ -1,0 +1,118 @@
+---
+
+- name: Get mopidy gpg keys
+  shell: sudo wget -q -O - https://apt.mopidy.com/mopidy.gpg | sudo apt-key add -
+  args:
+    warn: False
+
+- name: Get mopidy sources.list 
+  shell: sudo wget -q -O /etc/apt/sources.list.d/mopidy.list https://apt.mopidy.com/buster.list
+  args:
+    warn: False 
+
+- name: Update release info to allow updates
+  shell: sudo apt-get --allow-releaseinfo-change update 
+  args:
+    warn: false
+
+- name: Run apt update
+  apt:
+    update_cache: yes
+
+- name: Package Installation
+  apt:
+    name:
+      - expect
+      - pulseaudio*
+      - bluez-tools
+      - python3-pip
+      - python3-dev
+      - libspotify-dev
+      - build-essential
+      - mopidy
+      - mopidy-spotify
+    state: present
+
+- name: Install Mopidy-Mobile
+  pip:
+    name: Mopidy-Mobile
+
+- name: Create /etc/mopidy directory 
+  file:
+    path: /etc/mopidy
+    state: directory
+    owner: mopidy
+    group: root
+    mode: '0755'
+
+- name: Copy mopidy config to raspberry pi to /etc/mopidy
+  template:
+    src: mopidy.conf.j2
+    dest: /etc/mopidy/mopidy.conf
+    owner: mopidy 
+    group: root
+    mode: '0755'
+
+- name: Create .config/mopidy directory in home
+  file:
+    path: /home/pi/.config/mopidy
+    state: directory
+    owner: pi
+    group: pi
+    mode: '0777'
+    
+- name: Copy mopidy config to .config/mopidy
+  template:
+    src: mopidy.conf.j2
+    dest: /home/pi/.config/mopidy/mopidy.conf
+    owner: pi 
+    group: pi
+    mode: '0777'
+
+- name: Copy expect script to home directory
+  template:
+    src: mopidy.sh.j2
+    dest: /home/pi/mopidy.sh
+    owner: pi
+    group: pi 
+    mode: '0755'
+
+- name: Copy daemon.conf to /etc/pulse 
+  copy: 
+    src: daemon.conf 
+    dest: /etc/pulse/daemon.conf  
+    owner: root
+    group: root 
+    mode: '0755'
+
+- name: Copy default.pa to /etc/pulse 
+  copy:
+    src: default.pa
+    dest: /etc/pulse/default.pa
+    owner: root
+    group: root 
+    mode: '0755'
+
+- name: Copy system.pa to /etc/pulse 
+  copy:
+    src: system.pa
+    dest: /etc/pulse/system.pa
+    owner: root
+    group: root 
+    mode: '0755'
+
+- name: Add pi user to audio lp group
+  shell: sudo usermod -a -G lp pi
+  args:
+    warn: false
+
+- name: Create crontab to start mopidy.sh on reboot
+  ansible.builtin.cron:
+    name: pi
+    special_time: reboot
+    user: pi
+    job: "/usr/bin/expect /home/pi/mopidy.sh"
+
+- name: Reboot Raspberry Pi
+  reboot:
+    reboot_timeout: 60
